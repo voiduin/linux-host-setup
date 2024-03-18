@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Usage example: show_usage
 show_usage() {
     echo "= = Usage = ="
@@ -10,10 +9,9 @@ show_usage() {
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            bash <(curl -Ls https://gist.github.com/worldadventurer/842f1a10762cba0ce27dc8f99a835377/raw) [PORT]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [PORT]"
     echo "        wget:"
-    echo "            bash <(wget -qO- https://gist.github.com/worldadventurer/842f1a10762cba0ce27dc8f99a835377/raw)"
-    echo "            wget -qO - https://gist.github.com/worldadventurer/842f1a10762cba0ce27dc8f99a835377/raw | bash -s [PORT]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [PORT]"
     echo -e "\n"
     echo "Requirements:"
     echo "    - Run as root"
@@ -22,7 +20,7 @@ show_usage() {
     echo "    - The file must contain one active or commented 'Port' line"
     echo -e "\n"
     echo "Script created by \"Voiduin\""
-    echo "Source available at https://gist.github.com/Voiduin"
+    echo "Source available at https://github.com/voiduin/sshd-set-port"
 }
 
 
