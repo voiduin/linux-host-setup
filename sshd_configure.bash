@@ -4,18 +4,22 @@
 show_usage() {
     echo "= = Usage = ="
     echo "    Directly in CLI:"
-    echo "        $0 [new_ssh_port]"
-    echo "        Example: $0 2222"
+    echo "        $0 [setting_name] [value]"
+    echo "        Examples:"
+    echo "            $0 Port 2222"
+    echo "            $0 PermitRootLogin no"
+    echo "            $0 PasswordAuthentication no"
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [PORT]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [setting_name] [value]"
     echo "        wget:"
-    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [PORT]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [setting_name] [value]"
     echo -e "\n"
     echo "Requirements:"
     echo "    - Run as root"
-    echo -e "\n"
+    echo "Supported settings:"
+    echo "    - Port, PermitRootLogin, PasswordAuthentication, and other valid sshd settings"
     echo "Config file requirements:"
     echo "    - The file must contain one active or commented 'Port' line"
     echo -e "\n"
@@ -31,7 +35,6 @@ exit_with_err() {
     show_usage
     exit 1
 }
-
 
 # Usage example: check_root_privileges
 check_root_privileges() {
@@ -85,23 +88,6 @@ check_sshd_config_setting() {
     fi
 }
 
-# Usage example: new_port=$(get_new_port_val "$@")
-get_new_port_val() {
-    if [[ $# -gt 1 ]]; then
-        exit_with_err "Too many arguments. Please provide only one argument for the port or none."
-    fi
-
-    local new_port="$1"
-    if [[ -z "$new_port" ]]; then
-        read -p "Enter new SSH port number between [1024 and 65535].: " new_port
-    fi
-
-    if ! [[ "$new_port" =~ ^[0-9]+$ ]] || [ "$new_port" -lt 1024 ] || [ "$new_port" -gt 65535 ]; then
-        exit_with_err "Invalid port number: $new_port. Please specify a number between 1024 and 65535."
-    fi
-    echo "$new_port"
-}
-
 # Usage example: create_backup_for_file "/etc/ssh/sshd_config"
 create_backup_for_file() {
     local file_path="$1"
@@ -112,37 +98,57 @@ create_backup_for_file() {
     echo "Backup created: $backup_path"
 }
 
-# Usage example: set_new_sshd_port "/etc/ssh/sshd_config" 2222
-set_new_sshd_port() {
-    local config_file="$1"
-    local new_port="$2"
+
+# Usage example: set_new_sshd_config "/etc/ssh/sshd_config" Port 2222
+set_new_sshd_config() {
+    local config_file="${1}"
+    local setting="${2}"
+    local value="${3}"
+
 
     local modifying_user="${SUDO_USER:-$(whoami)}"
     # Time delimiter set as "-" for easy AWK processing of "grep -n" output, which has the line number format "256:<string_value>"
     local modifying_time="$(date +'%Y-%m-%d, %H-%M-%S')"
-    local original_line_val=$(grep -nE '^[[:blank:]]*Port[[:blank:]]+[0-9]+' "$config_file")
+
+    local original_line_val=$(grep -nE "^[[:blank:]]*${setting}[[:blank:]]" "${config_file}")
     local original_line_number=$(echo "$original_line_val" | cut -d':' -f1)
-    local original_port=$(echo "$original_line_val" | grep -Po '(?<=Port\s)\d+')
+    # TODO: Return logic display previous value which set now
+    # local original_port=$(echo "$original_line_val" | grep -Po '(?<=Port\s)\d+')
+
+    local comment="# Changed by script on ${modifying_time} by user \"${modifying_user}\""
 
     if [[ ! -z "${original_line_number}" ]]; then
-        sed -i "${original_line_number}s/.*/Port $new_port # Changed by script on ${modifying_time} by user \"${modifying_user}\"/" "$config_file"
-        echo "SSH port changed to $new_port on line ${original_line_number} in $config_file."
+        sed -i "${original_line_number}s/.*/$setting $value ${comment}/" "$config_file"
+        echo "$setting changed to $value on line ${original_line_number} in $config_file."
     else
-        echo "Port $new_port # Added by script on $(date +%Y-%m-%d) by $modifying_user" >> "$config_file"
-        echo "SSH port added to $new_port in $config_file."
+        echo "$setting $value ${comment}" >> "$config_file"
+        echo "$setting added with value $value in $config_file."
     fi
 }
 
 main() {
     local config_file_path="/etc/ssh/sshd_config"
-    local new_port
+    local setting="$1"
+    local value="$2"
+
+    if [[ $# -gt 2 ]]; then
+        exit_with_err "Too many arguments. Please provide only two arguments [name] [value]."
+    fi
+
+# TODO: Return check on port value
+#     if ! [[ "$new_port" =~ ^[0-9]+$ ]] || [ "$new_port" -lt 1024 ] || [ "$new_port" -gt 65535 ]; then
+#         exit_with_err "Invalid port number: $new_port. Please specify a number between 1024 and 65535."
+#     fi
+
+    if [[ -z "$setting" ]] || [[ -z "$value" ]]; then
+        exit_with_err "Missing arguments. Please specify a setting and a value."
+    fi
 
     check_root_privileges
     check_file_exists "${config_file_path}"
-    check_sshd_config_setting "${config_file_path}" "Port"
-    new_port=$(get_new_port_val "$@")
-    create_backup_for_file "$config_file_path"
-    set_new_sshd_port "$config_file_path" "$new_port"
+    check_sshd_config_setting "${config_file_path}" "${setting}"
+    create_backup_for_file "${config_file_path}"
+    set_new_sshd_config "$config_file_path" "${setting}" "$value"
 }
 
 main "$@"
