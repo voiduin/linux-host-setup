@@ -23,8 +23,6 @@ show_usage() {
     echo "Source available at https://github.com/voiduin/sshd-set-port"
 }
 
-
-
 # Usage example: exit_with_err "Error message"
 exit_with_err() {
     local message="$1"
@@ -50,32 +48,40 @@ check_file_exists() {
     fi
 }
 
-
-
-# Check SSHD configuration for the 'Port' setting
-# Usage example: check_port_config "/etc/ssh/sshd_config"
-check_port_config() {
+# Check SSHD configuration for a specified setting
+#   check_sshd_config_setting <!config_file!> <!setting_name!>
+# Usage example:
+#   check_sshd_config_setting "/etc/ssh/sshd_config" "Port"
+check_sshd_config_setting() {
     local config_file="$1"
-    check_file_exists "$config_file"
+    local setting_name="$2"
 
-    # Find active Port lines and their line numbers
-    # This line must catch not correct lines like this - with non digit value
+    # Find active setting lines and their line numbers.
+    # This line must catch incorrect lines, e.g., lines with non-digit value:
     #     Port new_port # Changed by root on 2024-03-18, 12:24:41
-    local port_lines_info=$(grep -nE '^[[:blank:]]*Port[[:blank:]]' "$config_file")
+    local setting_lines_info=$(grep -nE "^[[:blank:]]*${setting_name}[[:blank:]]" "${config_file}")
 
-    # Count the number of active 'Port' lines
-    local active_lines=$(echo "$port_lines_info" | wc -l)
+    # Count the number of active setting lines
+    # Calculate active lines only if 'setting_lines_info' is not empty
+    local active_lines
+    if [[ -n "${setting_lines_info}" ]]; then
+        active_lines=$(echo "${setting_lines_info}" | wc -l)
+    else
+        active_lines=0
+    fi
 
     if [[ $active_lines -eq 1 ]]; then
-        local line_info=$(echo "$port_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "        "$2}')
-        echo "One active 'Port' line found in \"$config_file\":"
+        # OK
+        local line_info=$(echo "$setting_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "        "$2}')
+        echo "One active '$setting_name' line found in \"$config_file\":"
         echo "$line_info"
     elif [[ $active_lines -gt 1 ]]; then
-        echo "Multiple active 'Port' lines found in \"$config_file\":"
-        echo "$port_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "        "$2}'
-        exit_with_err "Please clean up the file."
+        # ERR
+        echo "Multiple active '$setting_name' lines found in \"$config_file\":"
+        echo "$setting_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "        "$2}'
+        exit_with_err "Multiple active '$setting_name' lines found. Please clean up the file."
     else
-        echo "No active 'Port' line found in \"$config_file\". A new one will be added."
+        echo "No active '$setting_name' line found in \"$config_file\". A new one will be added."
     fi
 }
 
@@ -106,7 +112,6 @@ create_backup_for_file() {
     echo "Backup created: $backup_path"
 }
 
-
 # Usage example: set_new_sshd_port "/etc/ssh/sshd_config" 2222
 set_new_sshd_port() {
     local config_file="$1"
@@ -115,7 +120,6 @@ set_new_sshd_port() {
     local modifying_user="${SUDO_USER:-$(whoami)}"
     # Time delimiter set as "-" for easy AWK processing of "grep -n" output, which has the line number format "256:<string_value>"
     local modifying_time="$(date +'%Y-%m-%d, %H-%M-%S')"
-
     local original_line_val=$(grep -nE '^[[:blank:]]*Port[[:blank:]]+[0-9]+' "$config_file")
     local original_line_number=$(echo "$original_line_val" | cut -d':' -f1)
     local original_port=$(echo "$original_line_val" | grep -Po '(?<=Port\s)\d+')
@@ -134,7 +138,8 @@ main() {
     local new_port
 
     check_root_privileges
-    check_port_config "$config_file_path"
+    check_file_exists "${config_file_path}"
+    check_sshd_config_setting "${config_file_path}" "Port"
     new_port=$(get_new_port_val "$@")
     create_backup_for_file "$config_file_path"
     set_new_sshd_port "$config_file_path" "$new_port"
