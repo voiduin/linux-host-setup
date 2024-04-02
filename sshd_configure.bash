@@ -36,15 +36,15 @@ exit_with_err() {
     exit 1
 }
 
-# Usage example: check_root_privileges
-check_root_privileges() {
+# Usage example: assert_run_as_root
+assert_run_as_root() {
     if [[ $EUID -ne 0 ]]; then
         exit_with_err "This script must be run as root"
     fi
 }
 
-# Usage example: check_file_exists "/path/to/file"
-check_file_exists() {
+# Usage example: assert_file_exists "/path/to/file"
+assert_file_exists() {
     local file_path="$1"
     if [[ ! -f "$file_path" ]]; then
         exit_with_err "The specified file does not exist: $file_path"
@@ -144,8 +144,8 @@ main() {
         exit_with_err "Missing arguments. Please specify a setting and a value."
     fi
 
-    check_root_privileges
-    check_file_exists "${config_file_path}"
+    assert_run_as_root
+    assert_file_exists "${config_file_path}"
     check_sshd_config_setting "${config_file_path}" "${setting}"
     create_backup_for_file "${config_file_path}"
     set_new_sshd_config "$config_file_path" "${setting}" "$value"
