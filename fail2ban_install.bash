@@ -121,6 +121,9 @@ main() {
     install_app "fail2ban"
     create_config_file
     start_fail2ban
+    # Wait while f2b started
+    # Without wait we get error: Failed to access socket path: /var/run/fail2ban/fail2ban.sock. Is fail2ban running?
+    sleep 2
     check_status
 }
 
