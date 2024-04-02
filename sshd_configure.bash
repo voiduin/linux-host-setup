@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Set bash execution flags:
+# - Treat unset variables as an error when substituting
+# - Exit immediately if a command exits with a non-zero status
+# - Print each command to stdout before executing it (useful for debugging)
+set -u
+# set -e
+# set -x
+
 # Usage example: show_usage
 show_usage() {
     echo "= = Usage = ="
