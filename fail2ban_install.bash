@@ -52,7 +52,8 @@ assert_file_not_exists() {
 # Ensure an application is not already installed
 assert_not_installed() {
     local app_name="$1"
-    if dpkg -l | grep -qw "$app_name"; then
+    # Checking if the package is installed and not marked for removal
+    if dpkg-query -W -f='${Status}' "$app_name" 2>/dev/null | grep -q "install ok installed"; then
         exit_with_err "The application is already installed: $app_name"
     fi
 }
