@@ -20,9 +20,9 @@ show_usage() {
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [setting_name] [value]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/sshd_configure.bash | sudo bash -s [setting_name] [value]"
     echo "        wget:"
-    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/sshd-set-port/main/sshd_configure.bash | sudo bash -s [setting_name] [value]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/sshd_configure.bash | sudo bash -s [setting_name] [value]"
     echo -e "\n"
     echo "Requirements:"
     echo "    - Run as root"
@@ -32,7 +32,7 @@ show_usage() {
     echo "    - The file must contain one active or commented 'Port' line"
     echo -e "\n"
     echo "Script created by \"Voiduin\""
-    echo "Source available at https://github.com/voiduin/sshd-set-port"
+    echo "Source available at https://github.com/voiduin/linux-host-setup"
 }
 
 # Usage example: exit_with_err "Error message"
