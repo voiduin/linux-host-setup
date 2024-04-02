@@ -12,9 +12,15 @@ set -u
 # Usage example: show_usage
 show_usage() {
     echo "= = Usage = ="
-    echo "    Run the script with sudo:"
+    echo "    Directly in CLI - run the script with sudo:"
     echo "        sudo $0"
-    echo
+    echo "    From WEB:"
+    echo "        To run the script from the internet use:"
+    echo "        curl:"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/fail2ban_install.bash | sudo bash -s"
+    echo "        wget:"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/fail2ban_install.bash | sudo bash -s"
+    echo -e "\n"
     echo "Requirements:"
     echo "    - Run as root"
     echo "    - Fail2Ban must be NOT installed"
