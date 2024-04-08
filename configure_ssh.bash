@@ -8,17 +8,50 @@ set -u
 # set -e
 # set -x
 
-# Base URL of the repository
-REPO_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+# Show usage instructions
+# Usage example: show_usage
+show_usage() {
+    echo "= = Usage = ="
+    echo "    Directly in CLI:"
+    echo "        $0 [new_username] [new_sshd_port]"
+    echo "            - new_username: Name of the user to be created."
+    echo "            - new_sshd_port: Change SSHD port from default 22 to [new_sshd_port]."
+    echo "    From WEB:"
+    echo "        To run the script from the internet use:"
+    echo "        curl:"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/configure_ssh.bash | sudo bash -s [new_username] [new_sshd_port]"
+    echo "        wget:"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/configure_ssh.bash | sudo bash -s [new_username] [new_sshd_port]"
+}
+
+# Usage example: exit_with_err "Error message"
+exit_with_err() {
+    local message="$1"
+    echo "Error: $message"
+    echo -e "\n"
+    show_usage
+    exit 1
+}
+
+# Usage example: assert_run_as_root
+assert_run_as_root() {
+    if [[ $EUID -ne 0 ]]; then
+        exit_with_err "This script must be run as root"
+    fi
+}
 
 # Function to download and execute a remote script with parameters "run_remote_script"
 run_rscript () {
-    script="${1}"
+    local script="${1}"
+
+    # Base URL of the repository
+    local repo_url="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+    
     shift  # Remove script name from the parameters list
     params=("$@")  # Remaining arguments are parameters for the script
 
     echo "Load and run ${script} with parameters: ${params[*]}..."
-    curl -Ls "$REPO_URL/${script}.bash" | sudo bash -s -- "${params[@]}"
+    curl -Ls "${repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
 }
 
 # Usage example: create_backup_for_file "/etc/ssh/sshd_config"
@@ -37,6 +70,12 @@ main() {
     local new_sshd_port="${2}"
 
     local config_file_path="/etc/ssh/sshd_config"
+
+    if [[ -z "$new_username" ]] || [[ -z "$new_sshd_port" ]]; then
+        exit_with_err "Missing arguments. Please specify a [new_username] and a [new_sshd_port]."
+    fi
+
+    assert_run_as_root
 
     # Create new user with random password
     run_rscript create_user ${new_username}
