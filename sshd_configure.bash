@@ -96,23 +96,11 @@ check_sshd_config_setting() {
     fi
 }
 
-# Usage example: create_backup_for_file "/etc/ssh/sshd_config"
-create_backup_for_file() {
-    local file_path="$1"
-    local backup_dir="${2:-$(dirname "$file_path")}"
-    local old_filename="$(basename -- "$file_path")"
-    local backup_path="${backup_dir}/${old_filename}.$(date +%y%m%d_%H%M%Sms).bac"
-    cp "$file_path" "$backup_path" || exit_with_err "Failed to create backup file: $backup_path."
-    echo "Backup created: $backup_path"
-}
-
-
 # Usage example: set_new_sshd_config "/etc/ssh/sshd_config" Port 2222
 set_new_sshd_config() {
     local config_file="${1}"
     local setting="${2}"
     local value="${3}"
-
 
     local modifying_user="${SUDO_USER:-$(whoami)}"
     # Time delimiter set as "-" for easy AWK processing of "grep -n" output, which has the line number format "256:<string_value>"
@@ -155,7 +143,6 @@ main() {
     assert_run_as_root
     assert_file_exists "${config_file_path}"
     check_sshd_config_setting "${config_file_path}" "${setting}"
-    create_backup_for_file "${config_file_path}"
     set_new_sshd_config "$config_file_path" "${setting}" "$value"
 }
 
