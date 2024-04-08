@@ -11,10 +11,18 @@ set -u
 # Show usage instructions
 # Usage example: show_usage
 show_usage() {
-    echo "Usage: $0 username [password]"
-    echo "username: Name of the user to be created."
-    echo "password: (Optional) Password for the new user. If not provided, a random password will be generated."
-    echo
+    echo "= = Usage = ="
+    echo "    Directly in CLI:"
+    echo "        $0 username [password]"
+    echo "            - username: Name of the user to be created."
+    echo "            - password: (Optional) Password for the new user.If not provided, a random password will be generated."
+    echo "    From WEB:"
+    echo "        To run the script from the internet use:"
+    echo "        curl:"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash | sudo bash -s username [password]"
+    echo "        wget:"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash | sudo bash -s username [password]"
+    echo -e "\n"
     echo "This script creates a new user with the specified username and password."
     echo "If the password is not provided, it generates a random password for the user."
 }
