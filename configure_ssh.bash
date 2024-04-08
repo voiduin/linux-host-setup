@@ -23,26 +23,30 @@ run_rscript () {
 
 # Usage example: create_backup_for_file "/etc/ssh/sshd_config"
 create_backup_for_file() {
-    local file_path="$1"
-    local backup_dir="${2:-$(dirname "$file_path")}"
-    local old_filename="$(basename -- "$file_path")"
+    local file_path="${1}"
+    local backup_dir="${2:-$(dirname "${file_path}")}"
+    local old_filename="$(basename -- "${file_path}")"
     local backup_path="${backup_dir}/${old_filename}.$(date +%y%m%d_%H%M%Sms).bac"
-    cp "$file_path" "$backup_path" || exit_with_err "Failed to create backup file: $backup_path."
-    echo "Backup created: $backup_path"
+    cp "${file_path}" "${backup_path}" || exit_with_err "Failed to create backup file: ${backup_path}."
+    echo "Backup created: ${backup_path}"
 }
 
+# Main function to handle script logic
 main() {
+    local new_username="${1}"
+    local new_sshd_port="${2}"
+
     local config_file_path="/etc/ssh/sshd_config"
 
-    # Create new user
-    # TODO:this
+    # Create new user with random password
+    run_rscript create_user ${new_username}
 
     # Configure SSH config file
     create_backup_for_file "${config_file_path}"
-    run_rscript sshd_configure Port 2221
+    run_rscript sshd_configure Port ${new_sshd_port}
    
     # Install fail2ban
-    # TODO:this
+    run_rscript fail2ban_install
 
     echo "Config ended"
 }
