@@ -27,9 +27,9 @@ show_usage() {
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]"
     echo "        wget:"
-    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]"
 }
 
 
@@ -107,7 +107,13 @@ main() {
     # Configure SSH config file
     create_backup_for_file "${config_file_path}"
     run_rscript sshd_configure Port ${new_sshd_port}
-    local sshd_config_status=$?
+    local sshd_port_status=$?
+
+    run_rscript sshd_configure PermitRootLogin no
+    local sshd_permit_root_status=$?
+
+    run_rscript sshd_configure LoginGraceTime 50
+    local sshd_login_grace_status=$?
    
     # Install fail2ban
     run_rscript fail2ban_install
@@ -122,7 +128,9 @@ main() {
 
     echo -e "\n${BLUE}Operation Summary (0 - success, 1 - error):${NC}"
     echo -e "  - ${GREEN}User Creation:${NC} ${user_creation_status}"
-    echo -e "  - ${GREEN}SSHD Configuration:${NC} ${sshd_config_status}"
+    echo -e "  - ${GREEN}SSHD Port Configuration:${NC} ${sshd_port_status}"
+    echo -e "  - ${GREEN}SSHD PermitRootLogin Configuration:${NC} ${sshd_permit_root_status}"
+    echo -e "  - ${GREEN}SSHD PermitRootLogin Configuration:${NC} ${sshd_login_grace_status}"
     echo -e "  - ${GREEN}Fail2Ban Installation:${NC} ${fail2ban_status}"
     echo -e "  - ${GREEN}SSHD Restart:${NC} ${sshd_restart_status}"
 

@@ -19,11 +19,11 @@ This script is the main orchestrator that sets up secure remote authentication b
 
 #### Usage:
 ```bash
-curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]
+curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]
 ```
 or
 ```bash
-wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]
+wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]
 ```
 
 ### 2. `fail2ban_install.bash`

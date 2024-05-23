@@ -151,7 +151,7 @@ main() {
     assert_run_as_root
     assert_file_exists "${config_file_path}"
     check_sshd_config_setting "${config_file_path}" "${setting}"
-    set_new_sshd_config "$config_file_path" "${setting}" "$value"
+    set_new_sshd_config "${config_file_path}" "${setting}" "$value"
 }
 
 main "$@"
