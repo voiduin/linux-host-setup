@@ -20,17 +20,18 @@ NC='\033[0m' # No Color
 show_usage() {
     echo "= = Usage = ="
     echo "    Directly in CLI:"
-    echo "        $0 username [password]"
+    echo "        $0 username [need_add_to_sudo] [password]"
     echo "            - username: Name of the user to be created."
+    echo "            - need_add_to_sudo: (Optional) \"yes\" or empty"
     echo "            - password: (Optional) Password for the new user.If not provided, a random password will be generated."
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
     echo "            $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\\"
-    echo "              curl -Ls \"\${SCRIPT_URL}\" | sudo bash -s username [password]"
+    echo "              curl -Ls \"\${SCRIPT_URL}\" | sudo bash -s username [need_add_to_sudo] [password]"
     echo "        wget:"
     echo "            $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\\"
-    echo "              wget -qO - \"\${SCRIPT_URL}\" | sudo bash -s username [password]"
+    echo "              wget -qO - \"\${SCRIPT_URL}\" | sudo bash -s username [need_add_to_sudo] [password]"
     echo -e "\n"
     echo "This script creates a new user with the specified username and password."
     echo "If the password is not provided, it generates a random password for the user."
@@ -88,9 +89,9 @@ create_user() {
     sudo useradd -m -p "$hashed_password" "$username"
 
     echo -en "${YELLOW}"
-    echo "  REMEMBER: User creation successful:"
+    echo "    REMEMBER: User creation successful:"
     echo "    - Username: ${username}"
-    echo "    - Password: ${password}"
+    echo -n "    - Password: ${password}"
     if [[ ${password_generated} == "yes" ]]; then
         echo " (randomly generated)"
     else
@@ -104,12 +105,20 @@ main() {
     assert_run_as_root
 
     if [[ $# -lt 1 ]]; then
-        exit_with_err "Invalid number of arguments"
+        exit_with_err "ERR: Invalid number of arguments"
     fi
     local username="$1"
-    local password="${2:-}"
+    # Default to "no" if the third argument is not provided
+    local need_add_to_sudo="${2:-no}"
+    local password="${3:-}"
 
-    create_user "$username" "$password"
+    create_user "${username}" "${password}"
+    if [[ "${need_add_to_sudo}" == "yes" ]]; then
+        usermod -aG sudo "${username}"
+        echo "  - User ${username} has been added to the sudo group."
+    else
+        echo "  - User ${username} has not been added to the sudo group."
+    fi
 }
 
 main "$@"

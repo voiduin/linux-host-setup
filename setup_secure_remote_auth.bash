@@ -59,7 +59,8 @@ run_rscript () {
     shift  # Remove script name from the parameters list
     params=("$@")  # Remaining arguments are parameters for the script
 
-    echo -e "${BLUE}  RUN${NC}: Load and run script \"${script}\" with parameters: ${params[*]}..."
+    echo -e "${BLUE}  RUN${NC}: Load and run script \"${script}\" ..."
+    echo "       With parameters: ${params[*]}"
     curl -Ls "${base_repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
 
     # Separate from next terminal output
@@ -72,20 +73,26 @@ run_rscript () {
 create_backup_for_file() {
     local file_path="${1}"
     local backup_dir="${2:-$(dirname "${file_path}")}"
+
+    echo -e "  ${BLUE}Backup${NC} file \"${file_path}\" start ..."
     local old_filename="$(basename -- "${file_path}")"
     local backup_path="${backup_dir}/${old_filename}.$(date +%y%m%d_%H%M%Sms).bac"
     cp "${file_path}" "${backup_path}" || exit_with_err "Failed to create backup file: ${backup_path}."
-    echo "Backup created: ${backup_path}"
+    echo "  - Backup created: ${backup_path}"
+    echo -ne "\n"
+    return 0
 }
 
 # Without parameters
 restart_sshd() {
+    echo -e "  ${BLUE}SSHD${NC} restart start ..."
     systemctl restart sshd
     if [[ $? -ne 0 ]]; then
-        echo "Failed to restart SSHD."
+        echo "  - Failed to restart SSHD."
         return 1
     fi
-    echo "SSHD restarted successfully."
+    echo "  - SSHD restarted successfully."
+    echo -ne "\n"
     return 0
 }
 
@@ -104,7 +111,7 @@ main() {
     assert_run_as_root
 
     # Create new user with random password
-    run_rscript create_user ${new_username}
+    run_rscript create_user "${new_username}" "yes"
     local user_creation_status=$?
 
     # Configure SSH config file
@@ -129,17 +136,18 @@ main() {
         sshd_restart_status=$?
     fi
 
-    echo -ne "\n"
-    echo -e "${BLUE}Operation Summary (0 - success, 1 - error):${NC}"
+    echo -e "  ${BLUE}Operation Summary${NC} (Status codes: 0 is success, 1 is error):"
     echo -e "  - User Creation:${NC} ${user_creation_status}"
     echo -e "  - SSHD Port Configuration: ${sshd_port_status}"
     echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_permit_root_status}"
     echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_login_grace_status}"
     echo -e "  - Fail2Ban Installation: ${fail2ban_status}"
-    echo -e "  - SSHD Restart: ${sshd_restart_status}"
-
+    if [[ "${need_restart_sshd}" == "yes" ]]; then
+        echo -e "  - SSHD Restart: ${sshd_restart_status}"
+    fi
     echo -ne "\n"
-    echo "${GREEN}SUCCESS${NC}: Configuration process completed successfully"
+
+    echo -e "  ${GREEN}SUCCESS${NC}: Configuration process completed successfully"
 }
 
 main "$@"

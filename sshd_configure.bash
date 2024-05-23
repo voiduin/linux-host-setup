@@ -91,16 +91,17 @@ check_sshd_config_setting() {
 
     if [[ $active_lines -eq 1 ]]; then
         # OK
-        local line_info=$(echo "$setting_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "        "$2}')
-        echo "One active '$setting_name' line found in \"$config_file\":"
+        local line_info=$(echo "$setting_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "    "$2}')
+        echo "  - One active '$setting_name' line found in \"$config_file\":"
         echo "$line_info"
     elif [[ $active_lines -gt 1 ]]; then
         # ERR
-        echo "Multiple active '$setting_name' lines found in \"$config_file\":"
+        echo "  - Multiple active '$setting_name' lines found in \"$config_file\":"
         echo "$setting_lines_info" | awk -F ":" '{printf "%s\n%s\n", "    Line number " $1 ":", "        "$2}'
         exit_with_err "Multiple active '$setting_name' lines found. Please clean up the file."
     else
-        echo "No active '$setting_name' line found in \"$config_file\". A new one will be added."
+        echo "  - No active '$setting_name' line found in \"$config_file\""
+        echo "    A new one will be added"
     fi
 }
 
@@ -123,10 +124,11 @@ set_new_sshd_config() {
 
     if [[ ! -z "${original_line_number}" ]]; then
         sed -i "${original_line_number}s/.*/$setting $value ${comment}/" "$config_file"
-        echo "$setting changed to $value on line ${original_line_number} in $config_file."
+        echo "    > ${setting} changed to $value on line ${original_line_number} in $config_file."
     else
-        echo "$setting $value ${comment}" >> "$config_file"
-        echo "$setting added with value $value in $config_file."
+        # Add new line in file end
+        echo "${setting} ${value} ${comment}" >> "${config_file}"
+        echo "    > ${setting} added with value \"${value}\" in \"${config_file}\""
     fi
 }
 
@@ -145,7 +147,7 @@ main() {
 #     fi
 
     if [[ -z "$setting" ]] || [[ -z "$value" ]]; then
-        exit_with_err "Missing arguments. Please specify a setting and a value."
+        exit_with_err "ERR: Missing arguments. Please specify a setting and a value."
     fi
 
     assert_run_as_root

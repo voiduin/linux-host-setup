@@ -99,7 +99,7 @@ bantime = 600
 # Function to activate and start Fail2Ban
 start_fail2ban() {
     echo "  - Enable unit Fail2Ban..."
-    sudo systemctl enable fail2ban > /dev/null
+    sudo systemctl enable fail2ban > /dev/null 2>&1
     echo "  - Starting unit Fail2Ban..."
     sudo systemctl start fail2ban > /dev/null
 }
