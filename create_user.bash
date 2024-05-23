@@ -8,6 +8,13 @@ set -u
 # set -e
 # set -x
 
+# ANSI Colors
+RED='\033[0;31m' # Error
+GREEN='\033[0;32m' # Success
+BLUE='\033[0;34m' # Info
+YELLOW='\033[0;93m' # Warning/Useful info
+NC='\033[0m' # No Color
+
 # Show usage instructions
 # Usage example: show_usage
 show_usage() {
@@ -80,14 +87,17 @@ create_user() {
     local hashed_password="$(openssl passwd -1 "$password")"
     sudo useradd -m -p "$hashed_password" "$username"
 
-    echo "User creation successful:"
-    echo "  - Username: $username"
-    echo -n "  - Password: $password"
-    if [[ $password_generated == "yes" ]]; then
+    echo -e "\n"
+    echo -e "${YELLOW}"
+    echo "* * REMEMBER: User creation successful: * *"
+    echo "  - Username: ${username}"
+    echo -n "  - Password: ${password}"
+    if [[ ${password_generated} == "yes" ]]; then
         echo " (randomly generated)"
     else
         echo " (set by user)"
     fi
+    echo -e "${NC}"
 }
 
 # Main function to handle script logic

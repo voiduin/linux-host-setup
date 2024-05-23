@@ -8,6 +8,13 @@ set -u
 # set -e
 # set -x
 
+# ANSI Colors
+RED='\033[0;31m' # Error
+GREEN='\033[0;32m' # Success
+BLUE='\033[0;34m' # Info
+YELLOW='\033[0;93m' # Warning/Useful info
+NC='\033[0m' # No Color
+
 # Show usage instructions
 # Usage example: show_usage
 show_usage() {
@@ -32,7 +39,7 @@ show_usage() {
 # Usage example: exit_with_err "Error message"
 exit_with_err() {
     local message="$1"
-    echo "Error: $message"
+    echo -e "${RED}Error: $message${NC}"
     echo -e "\n"
     show_usage
     exit 1
@@ -85,13 +92,17 @@ logpath = /var/log/auth.log
 maxretry = 5
 bantime = 600
 "
-    echo "Creating configuration file at $file_path..."
-    echo "$config_data" | sudo tee $file_path > /dev/null
+    echo -e "\n"
+    echo -e "${BLUE}* * Info: Creating configuration file at ${file_path}... * *${NC}"
+    echo -e "\n"
+    echo "$config_data" | sudo tee "${file_path}" > /dev/null
 }
 
 # Function to activate and start Fail2Ban
 start_fail2ban() {
-    echo "Activating and starting Fail2Ban..."
+    echo -e "\n"
+    echo -e "${BLUE}* * Info: Activating and starting Fail2Ban... * *${NC}"
+    echo -e "\n"
     sudo systemctl enable fail2ban
     sudo systemctl start fail2ban
 }
@@ -99,14 +110,27 @@ start_fail2ban() {
 # Function to check the status of Fail2Ban and sshd jail
 check_status() {
     echo "Checking Fail2Ban status..."
-    sudo systemctl status fail2ban > /dev/null
+    sudo systemctl is-active --quiet fail2ban
+
+    # For correct work this check always we need setup in file
+    # vim /etc/systemd/journald.conf
+    # [Journal]
+    # Storage=auto
+    # Storage=persistent
+    # Source: https://stackoverflow.com/questions/30783134/systemd-user-journals-not-being-created
     if [ $? -ne 0 ]; then
-        echo "Error: Fail2Ban service is not running properly."
+        echo -e "\n"
+        echo -e "${RED}* * Error: Fail2Ban service is not running properly * *${NC}"
+        echo -e "${YELLOW}"
+        echo "    [START of output] Possible reason described in journalctl:"
+        sudo journalctl -u fail2ban | grep fail2ban
+        echo "    [END of output]"
+        echo -e "${NC}"
         return 1
     fi
 
     echo "Checking Fail2Ban jail for SSH..."
-    sudo fail2ban-client status sshd > /dev/null
+    sudo fail2ban-client status sshd
     if [ $? -ne 0 ]; then
         echo "Error: SSH jail is not active in Fail2Ban."
         return 1

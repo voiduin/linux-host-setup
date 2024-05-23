@@ -8,6 +8,13 @@ set -u
 # set -e
 # set -x
 
+# ANSI Colors
+RED='\033[0;31m' # Error
+GREEN='\033[0;32m' # Success
+BLUE='\033[0;34m' # Info
+YELLOW='\033[0;93m' # Warning/Useful info
+NC='\033[0m' # No Color
+
 # Show usage instructions
 # Usage example: show_usage
 show_usage() {
@@ -43,15 +50,17 @@ assert_run_as_root() {
 # Function to download and execute a remote script with parameters "run_remote_script"
 run_rscript () {
     local script="${1}"
-
-    # Base URL of the repository
-    local repo_url="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+    local status=$?
+    local base_repo_url="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
     
     shift  # Remove script name from the parameters list
     params=("$@")  # Remaining arguments are parameters for the script
 
-    echo "Load and run ${script} with parameters: ${params[*]}..."
-    curl -Ls "${repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
+    echo -e "\n"
+    echo -e "${BLUE}* * Info: Load and run ${script} with parameters: ${params[*]}... * *${NC}"
+    curl -Ls "${base_repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
+
+    return $status
 }
 
 # Usage example: create_backup_for_file "/etc/ssh/sshd_config"
@@ -79,13 +88,22 @@ main() {
 
     # Create new user with random password
     run_rscript create_user ${new_username}
+    local user_creation_status=$?
 
     # Configure SSH config file
     create_backup_for_file "${config_file_path}"
     run_rscript sshd_configure Port ${new_sshd_port}
+    local sshd_config_status=$?
    
     # Install fail2ban
     run_rscript fail2ban_install
+    local fail2ban_status=$?
+
+    echo -e "\n${BLUE}Operation Summary (0 - success, 1 - error):${NC}"
+    echo -e "  - ${GREEN}User Creation:${NC} ${user_creation_status}"
+    echo -e "  - ${GREEN}SSHD Configuration:${NC} ${sshd_config_status}"
+    echo -e "  - ${GREEN}Fail2Ban Installation:${NC} ${fail2ban_status}"
+
 
     echo "Config ended"
 }
