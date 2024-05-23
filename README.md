@@ -36,11 +36,13 @@ Installs and configures Fail2Ban to enhance the security of the server by monito
 
 #### Usage:
 ```bash
-curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/fail2ban_install.bash | sudo bash -s
+$ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/fail2ban_install.bash';\
+curl -Ls "${SCRIPT_URL}" | sudo bash -s
 ```
 or
 ```bash
-wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/fail2ban_install.bash | sudo bash -s
+$ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/fail2ban_install.bash';\
+wget -qO - "${SCRIPT_URL}" | sudo bash -s
 ```
 
 ### 3. `sshd_configure.bash`
@@ -53,16 +55,26 @@ Modifies SSHD configuration settings securely to apply best security practices l
 
 #### Usage:
 ```bash
-curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/sshd_configure.bash | sudo bash -s [setting_name] [value]
+$ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/sshd_configure.bash';\
+curl -Ls "${SCRIPT_URL}" | sudo bash -s [setting_name] [value]
 ```
 or
 ```bash
-wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/sshd_configure.bash | sudo bash -s [setting_name] [value]
+$ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/sshd_configure.bash';\
+wget -qO - "${SCRIPT_URL}" | sudo bash -s [setting_name] [value]
 ```
 
 ### 4. `create_user.bash`
 
 Handles the creation of new users with an option to set a secure password or generate a random one.
+
+After running the command, you will receive the following output, which includes a new, randomly generated password that you can change later:
+```bash
+$ ./create_user.bash new_username
+User creation successful:
+  - Username: new_username
+  - Password: xhG71Ct94Vth4j7M (randomly generated)
+```
 
 #### Features:
 - Creates a new user with a specified or random password.
@@ -70,11 +82,13 @@ Handles the creation of new users with an option to set a secure password or gen
 
 #### Usage:
 ```bash
-curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash | sudo bash -s username [password]
+$ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\
+curl -Ls "${SCRIPT_URL}" | sudo bash -s username [password]
 ```
 or
 ```bash
-wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash | sudo bash -s username [password]
+$ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\
+wget -qO - "${SCRIPT_URL}" | sudo bash -s username [password]
 ```
 
 ## General Instructions

@@ -19,9 +19,9 @@ show_usage() {
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/configure_ssh.bash | sudo bash -s [new_username] [new_sshd_port]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]"
     echo "        wget:"
-    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/configure_ssh.bash | sudo bash -s [new_username] [new_sshd_port]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]"
 }
 
 # Usage example: exit_with_err "Error message"
