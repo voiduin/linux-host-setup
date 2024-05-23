@@ -20,9 +20,10 @@ NC='\033[0m' # No Color
 show_usage() {
     echo "= = Usage = ="
     echo "    Directly in CLI:"
-    echo "        $0 [new_username] [new_sshd_port]"
-    echo "            - new_username: Name of the user to be created."
-    echo "            - new_sshd_port: Change SSHD port from default 22 to [new_sshd_port]."
+    echo "        $0 [new_username] [new_sshd_port] [need_restart_sshd]"
+    echo "            - new_username [string]: Name of the user to be created."
+    echo "            - new_sshd_port [digit]: Change SSHD port from default 22 to [new_sshd_port]."
+    echo "            - need_restart_sshd ["yes" or empty]: This argument determines if SSHD needs to be restarted"
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
@@ -52,13 +53,12 @@ assert_run_as_root() {
 # Function to download and execute a remote script with parameters "run_remote_script"
 run_rscript () {
     local script="${1}"
-    local status=$?
+    local status="$?"
     local base_repo_url="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
     
     shift  # Remove script name from the parameters list
     params=("$@")  # Remaining arguments are parameters for the script
 
-    echo -e "\n"
     echo -e "${BLUE}  RUN${NC}: Load and run script \"${script}\" with parameters: ${params[*]}..."
     curl -Ls "${base_repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
 
@@ -75,10 +75,22 @@ create_backup_for_file() {
     echo "Backup created: ${backup_path}"
 }
 
+# Without parameters
+restart_sshd() {
+    systemctl restart sshd
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to restart SSHD."
+        return 1
+    fi
+    echo "SSHD restarted successfully."
+    return 0
+}
+
 # Main function to handle script logic
 main() {
     local new_username="${1}"
     local new_sshd_port="${2}"
+    local need_restart_sshd="${3}" # @TODO: Implement this functionality
 
     local config_file_path="/etc/ssh/sshd_config"
 
@@ -101,10 +113,18 @@ main() {
     run_rscript fail2ban_install
     local fail2ban_status=$?
 
+    # Check if SSHD needs to be restarted
+    local sshd_restart_status=0
+    if [[ "${need_restart_sshd}" == "yes" ]]; then
+        restart_sshd
+        sshd_restart_status=$?
+    fi
+
     echo -e "\n${BLUE}Operation Summary (0 - success, 1 - error):${NC}"
     echo -e "  - ${GREEN}User Creation:${NC} ${user_creation_status}"
     echo -e "  - ${GREEN}SSHD Configuration:${NC} ${sshd_config_status}"
     echo -e "  - ${GREEN}Fail2Ban Installation:${NC} ${fail2ban_status}"
+    echo -e "  - ${GREEN}SSHD Restart:${NC} ${sshd_restart_status}"
 
 
     echo "Config ended"
