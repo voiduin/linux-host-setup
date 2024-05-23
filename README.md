@@ -26,6 +26,11 @@ or
 wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]
 ```
 
+Example output below:
+<p align="center">
+    <img width="850" src="output_example.png" alt="Logo">
+</p>
+
 ### 2. `fail2ban_install.bash`
 
 Installs and configures Fail2Ban to enhance the security of the server by monitoring log files and banning IPs that show malicious signs.
