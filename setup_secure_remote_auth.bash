@@ -62,6 +62,9 @@ run_rscript () {
     echo -e "${BLUE}  RUN${NC}: Load and run script \"${script}\" with parameters: ${params[*]}..."
     curl -Ls "${base_repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
 
+    # Separate from next terminal output
+    echo -ne "\n"
+
     return $status
 }
 
@@ -126,16 +129,17 @@ main() {
         sshd_restart_status=$?
     fi
 
-    echo -e "\n${BLUE}Operation Summary (0 - success, 1 - error):${NC}"
-    echo -e "  - ${GREEN}User Creation:${NC} ${user_creation_status}"
-    echo -e "  - ${GREEN}SSHD Port Configuration:${NC} ${sshd_port_status}"
-    echo -e "  - ${GREEN}SSHD PermitRootLogin Configuration:${NC} ${sshd_permit_root_status}"
-    echo -e "  - ${GREEN}SSHD PermitRootLogin Configuration:${NC} ${sshd_login_grace_status}"
-    echo -e "  - ${GREEN}Fail2Ban Installation:${NC} ${fail2ban_status}"
-    echo -e "  - ${GREEN}SSHD Restart:${NC} ${sshd_restart_status}"
+    echo -ne "\n"
+    echo -e "${BLUE}Operation Summary (0 - success, 1 - error):${NC}"
+    echo -e "  - User Creation:${NC} ${user_creation_status}"
+    echo -e "  - SSHD Port Configuration: ${sshd_port_status}"
+    echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_permit_root_status}"
+    echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_login_grace_status}"
+    echo -e "  - Fail2Ban Installation: ${fail2ban_status}"
+    echo -e "  - SSHD Restart: ${sshd_restart_status}"
 
-
-    echo "Config ended"
+    echo -ne "\n"
+    echo "${GREEN}SUCCESS${NC}: Configuration process completed successfully"
 }
 
 main "$@"

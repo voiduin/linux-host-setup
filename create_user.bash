@@ -87,16 +87,16 @@ create_user() {
     local hashed_password="$(openssl passwd -1 "$password")"
     sudo useradd -m -p "$hashed_password" "$username"
 
-    echo -e "${YELLOW}"
-    echo "REMEMBER: User creation successful:"
-    echo "  - Username: ${username}"
-    echo -n "  - Password: ${password}"
+    echo -en "${YELLOW}"
+    echo "  REMEMBER: User creation successful:"
+    echo "    - Username: ${username}"
+    echo "    - Password: ${password}"
     if [[ ${password_generated} == "yes" ]]; then
         echo " (randomly generated)"
     else
         echo " (set by user)"
     fi
-    echo -e "${NC}"
+    echo -en "${NC}"
 }
 
 # Main function to handle script logic
