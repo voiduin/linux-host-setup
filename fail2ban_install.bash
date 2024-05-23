@@ -72,12 +72,12 @@ assert_not_installed() {
 }
 
 # Install an application by its name
-install_app() {
+install_app_quietly() {
     local app_name="$1"
-    assert_not_installed "$app_name"
-    echo "Installing $app_name..."
-    sudo apt-get update
-    sudo apt-get install "$app_name" -y
+    assert_not_installed "${app_name}"
+    echo "Installing ${app_name}..."
+    sudo apt-get update > /dev/null
+    sudo apt-get install "${app_name}" -y > /dev/null
 }
 
 # Function to create configuration file for Fail2Ban
@@ -92,17 +92,13 @@ logpath = /var/log/auth.log
 maxretry = 5
 bantime = 600
 "
-    echo -e "\n"
-    echo -e "${BLUE}* * Info: Creating configuration file at ${file_path}... * *${NC}"
-    echo -e "\n"
+    echo "  - Creating configuration file at ${file_path}..."
     echo "$config_data" | sudo tee "${file_path}" > /dev/null
 }
 
 # Function to activate and start Fail2Ban
 start_fail2ban() {
-    echo -e "\n"
-    echo -e "${BLUE}* * Info: Activating and starting Fail2Ban... * *${NC}"
-    echo -e "\n"
+    echo "  - Activating and starting Fail2Ban..."
     sudo systemctl enable fail2ban
     sudo systemctl start fail2ban
 }
@@ -120,7 +116,7 @@ check_status() {
     # Source: https://stackoverflow.com/questions/30783134/systemd-user-journals-not-being-created
     if [ $? -ne 0 ]; then
         echo -e "\n"
-        echo -e "${RED}* * Error: Fail2Ban service is not running properly * *${NC}"
+        echo -e "${RED}* * Error: Fail2Ban service is not running properly${NC}"
         echo -e "${YELLOW}"
         echo "    [START of output] Possible reason described in journalctl:"
         sudo journalctl -u fail2ban | grep fail2ban
@@ -130,7 +126,7 @@ check_status() {
     fi
 
     echo "Checking Fail2Ban jail for SSH..."
-    sudo fail2ban-client status sshd
+    sudo fail2ban-client status sshd > /dev/null
     if [ $? -ne 0 ]; then
         echo "Error: SSH jail is not active in Fail2Ban."
         return 1
@@ -142,7 +138,7 @@ check_status() {
 main() {
     assert_run_as_root
     assert_file_not_exists "/etc/fail2ban/jail.local"
-    install_app "fail2ban"
+    install_app_quietly "fail2ban"
     create_config_file
     start_fail2ban
     # Wait while f2b started

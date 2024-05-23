@@ -31,10 +31,12 @@ show_usage() {
     echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port]"
 }
 
+
+# Exit with an error message and show usage
 # Usage example: exit_with_err "Error message"
 exit_with_err() {
     local message="$1"
-    echo "Error: $message"
+    echo -e "${RED}Error: $message${NC}"
     echo -e "\n"
     show_usage
     exit 1
@@ -57,7 +59,7 @@ run_rscript () {
     params=("$@")  # Remaining arguments are parameters for the script
 
     echo -e "\n"
-    echo -e "${BLUE}* * Info: Load and run ${script} with parameters: ${params[*]}... * *${NC}"
+    echo -e "${BLUE}  RUN${NC}: Load and run script \"${script}\" with parameters: ${params[*]}..."
     curl -Ls "${base_repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
 
     return $status

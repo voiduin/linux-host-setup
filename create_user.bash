@@ -50,7 +50,7 @@ assert_user_not_exists() {
 # Usage example: exit_with_err "Error message"
 exit_with_err() {
     local message="$1"
-    echo "Error: $message"
+    echo -e "${RED}Error: $message${NC}"
     echo -e "\n"
     show_usage
     exit 1
@@ -87,9 +87,8 @@ create_user() {
     local hashed_password="$(openssl passwd -1 "$password")"
     sudo useradd -m -p "$hashed_password" "$username"
 
-    echo -e "\n"
     echo -e "${YELLOW}"
-    echo "* * REMEMBER: User creation successful: * *"
+    echo "REMEMBER: User creation successful:"
     echo "  - Username: ${username}"
     echo -n "  - Password: ${password}"
     if [[ ${password_generated} == "yes" ]]; then

@@ -8,6 +8,13 @@ set -u
 # set -e
 # set -x
 
+# ANSI Colors
+RED='\033[0;31m' # Error
+GREEN='\033[0;32m' # Success
+BLUE='\033[0;34m' # Info
+YELLOW='\033[0;93m' # Warning/Useful info
+NC='\033[0m' # No Color
+
 # Usage example: show_usage
 show_usage() {
     echo "= = Usage = ="
@@ -35,10 +42,11 @@ show_usage() {
     echo "Source available at https://github.com/voiduin/linux-host-setup"
 }
 
+# Exit with an error message and show usage
 # Usage example: exit_with_err "Error message"
 exit_with_err() {
     local message="$1"
-    echo "Error: $message"
+    echo -e "${RED}Error: $message${NC}"
     echo -e "\n"
     show_usage
     exit 1
