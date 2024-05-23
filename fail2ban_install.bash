@@ -98,14 +98,15 @@ bantime = 600
 
 # Function to activate and start Fail2Ban
 start_fail2ban() {
-    echo "  - Activating and starting Fail2Ban..."
-    sudo systemctl enable fail2ban
-    sudo systemctl start fail2ban
+    echo "  - Enable unit Fail2Ban..."
+    sudo systemctl enable fail2ban > /dev/null
+    echo "  - Starting unit Fail2Ban..."
+    sudo systemctl start fail2ban > /dev/null
 }
 
 # Function to check the status of Fail2Ban and sshd jail
 check_status() {
-    echo "Checking Fail2Ban status..."
+    echo "  - Checking Fail2Ban status..."
     sudo systemctl is-active --quiet fail2ban
 
     # For correct work this check always we need setup in file
@@ -125,14 +126,15 @@ check_status() {
         return 1
     fi
 
-    echo "Checking Fail2Ban jail for SSH..."
+    echo "  - Checking Fail2Ban jail for SSH..."
     sudo fail2ban-client status sshd > /dev/null
     if [ $? -ne 0 ]; then
         echo "Error: SSH jail is not active in Fail2Ban."
         return 1
     fi
 
-    echo "OK: Fail2Ban and SSH jail are active and running."
+    echo "  - SUCCESS: Fail2Ban and SSH jail are active and running."
+    return 0
 }
 
 main() {
