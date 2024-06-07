@@ -50,23 +50,85 @@ assert_run_as_root() {
     fi
 }
 
-# Function to download and execute a remote script with parameters "run_remote_script"
+# Function to download and execute a remote script with optional sudo and parameters
+# run remote script -> run_rscript
+# Usage:
+#   1. Set environment variable:
+#      export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+#   2. Use run_rscript script_path [--sudo] [--verbose] [params...]
+#      Example: run_rscript setup.sh [--sudo] [--verbose] param1 param2
 run_rscript () {
-    local script="${1}"
-    local status="$?"
-    local base_repo_url="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
-    
-    shift  # Remove script name from the parameters list
-    params=("$@")  # Remaining arguments are parameters for the script
+    local script_path="${1}"
 
-    echo -e "${BLUE}  RUN${NC}: Load and run script \"${script}\" ..."
-    echo "       With parameters: ${params[*]}"
-    curl -Ls "${base_repo_url}/${script}.bash" | sudo bash -s -- "${params[@]}"
+    local use_sudo=0  # Default no sudo
+    local verbose=0   # Default quiet
+    local params=()   # Initialize params array
+    
+    # Process optional parameters --sudo and --verbose
+    shift  # Remove script_path from the parameters list
+    while (( "$#" )); do
+        case "$1" in
+            --sudo)
+                use_sudo=1
+                shift
+                ;;
+            --verbose)
+                verbose=1
+                shift
+                ;;
+            *) # Assume the rest are script parameters
+                params+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # Get base repo URL from environment variable
+    local base_url_rawrepo="${RSCRIPT_BASE_URL}"
+    if [[ -z "$base_url_rawrepo" ]]; then
+        echo "Error: RSCRIPT_BASE_URL is not set. Please set it before running this function." >&2
+        return 1
+    fi
+
+    if [[ "${verbose}" -eq 1 ]]; then
+        echo -e "  ${BLUE}RUN${NC}: Try load and run script \"${script_path}\":"
+        echo "       From base repo url: \"${RSCRIPT_BASE_URL}\""
+        echo "       With parameters: ${params[*]}"
+    fi
+
+    # Download script content
+    local script_content
+    script_content=$(curl -Ls --fail "${RSCRIPT_BASE_URL}/${script_path}")
+    local status=$?
+    if [[ "$status" -ne 0 ]]; then
+        echo -e "       ${RED}Error${NC}: Failed to download the script"  >&2
+        echo "              From: \"${RSCRIPT_BASE_URL}/${script_path}\""  >&2
+        echo "              Curl exit status: \"${status}\"" >&2
+        return "${status}"
+    fi
+
+    if [[ "${verbose}" -eq 1 ]]; then
+        echo -e "     Script downloaded successfully"
+        echo "     Try running script..."
+    fi
+
+    # Execute script
+    if [[ "${use_sudo}" -eq 1 ]]; then
+        echo "${script_content}" | sudo bash -s -- "${params[@]}"
+    else
+        echo "${script_content}" | bash -s -- "${params[@]}"
+    fi
+    status=$?
+
+    if [[ "$status" -ne 0 ]]; then
+        echo "Error: Script execution failed. Bash exit status: $status" >&2
+        return "$status"
+    fi
 
     # Separate from next terminal output
     echo -ne "\n"
 
-    return $status
+    return "${status}"
 }
 
 # Usage example: create_backup_for_file "/etc/ssh/sshd_config"
@@ -100,40 +162,48 @@ restart_sshd() {
 main() {
     local new_username="${1}"
     local new_sshd_port="${2}"
-    local need_restart_sshd="${3}" # @TODO: Implement this functionality
+    local need_restart_sshd="${3:-no}"  # Default to no if not provided
 
     local config_file_path="/etc/ssh/sshd_config"
+    local total_errors=0
 
     if [[ -z "$new_username" ]] || [[ -z "$new_sshd_port" ]]; then
         exit_with_err "Missing arguments. Please specify a [new_username] and a [new_sshd_port]."
     fi
 
     assert_run_as_root
+    export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
 
     # Create new user with random password
-    run_rscript create_user "${new_username}" "yes"
+    run_rscript create_user.bash --sudo --verbose "${new_username}" "yes"
     local user_creation_status=$?
+    ((total_errors += user_creation_status != 0 ? 1 : 0))
 
     # Configure SSH config file
     create_backup_for_file "${config_file_path}"
-    run_rscript sshd_configure Port ${new_sshd_port}
+    run_rscript sshd_configure.bash --sudo --verbose Port ${new_sshd_port}
     local sshd_port_status=$?
+    ((total_errors += sshd_port_status != 0 ? 1 : 0))
 
-    run_rscript sshd_configure PermitRootLogin no
+    run_rscript sshd_configure.bash --sudo --verbose PermitRootLogin no
     local sshd_permit_root_status=$?
+    ((total_errors += sshd_permit_root_status != 0 ? 1 : 0))
 
-    run_rscript sshd_configure LoginGraceTime 50
+    run_rscript sshd_configure.bash --sudo --verbose LoginGraceTime 50
     local sshd_login_grace_status=$?
+    ((total_errors += sshd_login_grace_status != 0 ? 1 : 0))
    
     # Install fail2ban
-    run_rscript fail2ban_install
+    run_rscript fail2ban_install.bash --sudo --verbose
     local fail2ban_status=$?
+    ((total_errors += fail2ban_status != 0 ? 1 : 0))
 
     # Check if SSHD needs to be restarted
     local sshd_restart_status=0
     if [[ "${need_restart_sshd}" == "yes" ]]; then
         restart_sshd
         sshd_restart_status=$?
+        ((total_errors += sshd_restart_status != 0 ? 1 : 0))
     fi
 
     echo -e "  ${BLUE}Operation Summary${NC} (Status codes: 0 is success, 1 is error):"
@@ -147,7 +217,12 @@ main() {
     fi
     echo -ne "\n"
 
-    echo -e "  ${GREEN}SUCCESS${NC}: Configuration process completed successfully"
+    if [[ "${total_errors}" -eq 0 ]]; then
+        echo -e "  ${GREEN}SUCCESS${NC}: Configuration process completed successfully."
+    else
+        echo -e "  ${YELLOW}WARNING${NC}: Configuration process completed:"
+        echo -e "           Total errors: ${total_errors}"
+    fi
 }
 
 main "$@"
