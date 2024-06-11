@@ -15,7 +15,7 @@ BLUE='\033[0;34m' # Info
 YELLOW='\033[0;93m' # Warning/Useful info
 NC='\033[0m' # No Color
 
-export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+export RSCRIPT_BASE_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main'
 script_path="remote_scripts_methods.bash"
 script_content=$(curl -Ls --fail "${RSCRIPT_BASE_URL}/${script_path}" || { echo "Failed to download script from ${RSCRIPT_BASE_URL}/${script_path}" >&2; exit 1; })
 source <(echo -n "${script_content}")
@@ -26,16 +26,16 @@ source <(echo -n "${script_content}")
 show_usage() {
     echo "= = Usage = ="
     echo "    Directly in CLI:"
-    echo "        $0 [new_username] [new_sshd_port] [need_restart_sshd]"
+    echo "        $0 [new_username] [new_sshd_port] [--restart-sshd]"
     echo "            - new_username [string]: Name of the user to be created."
     echo "            - new_sshd_port [digit]: Change SSHD port from default 22 to [new_sshd_port]."
-    echo "            - need_restart_sshd ["yes" or empty]: This argument determines if SSHD needs to be restarted"
+    echo "            - --restart-sshd or empty: This argument determines if SSHD needs to be restarted"
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]"
     echo "        wget:"
-    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [need_restart_sshd]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]"
 }
 
 
@@ -124,7 +124,7 @@ main() {
 
     # Check if SSHD needs to be restarted
     local sshd_restart_status=0
-    if [[ "${need_restart_sshd}" == "yes" ]]; then
+    if [[ "${need_restart_sshd}" == "--restart-sshd" ]]; then
         restart_sshd
         sshd_restart_status=$?
         ((total_errors += sshd_restart_status != 0 ? 1 : 0))
@@ -136,7 +136,7 @@ main() {
     echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_permit_root_status}"
     echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_login_grace_status}"
     echo -e "  - Fail2Ban Installation: ${fail2ban_status}"
-    if [[ "${need_restart_sshd}" == "yes" ]]; then
+    if [[ "${need_restart_sshd}" == "--restart-sshd" ]]; then
         echo -e "  - SSHD Restart: ${sshd_restart_status}"
     fi
     echo -ne "\n"
