@@ -118,7 +118,7 @@ main() {
     ((total_errors += fail2ban_status != 0 ? 1 : 0))
 
     # Create new user with random password
-    run_rscript create_user.bash --sudo --verbose "${new_username}" "yes"
+    run_rscript create_user.bash --sudo --verbose "${new_username}" "--add-to-sudo"
     local user_creation_status=$?
     ((total_errors += user_creation_status != 0 ? 1 : 0))
 

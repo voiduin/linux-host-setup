@@ -20,18 +20,18 @@ NC='\033[0m' # No Color
 show_usage() {
     echo "= = Usage = ="
     echo "    Directly in CLI:"
-    echo "        $0 username [need_add_to_sudo] [password]"
+    echo "        $0 username [--add-to-sudo] [password]"
     echo "            - username: Name of the user to be created."
-    echo "            - need_add_to_sudo: (Optional) \"yes\" or empty"
+    echo "            - --add-to-sudo: (Optional)"
     echo "            - password: (Optional) Password for the new user.If not provided, a random password will be generated."
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
     echo "            $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\\"
-    echo "              curl -Ls \"\${SCRIPT_URL}\" | sudo bash -s username [need_add_to_sudo] [password]"
+    echo "              curl -Ls \"\${SCRIPT_URL}\" | sudo bash -s username [--add-to-sudo] [password]"
     echo "        wget:"
     echo "            $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\\"
-    echo "              wget -qO - \"\${SCRIPT_URL}\" | sudo bash -s username [need_add_to_sudo] [password]"
+    echo "              wget -qO - \"\${SCRIPT_URL}\" | sudo bash -s username [--add-to-sudo] [password]"
     echo -e "\n"
     echo "This script creates a new user with the specified username and password."
     echo "If the password is not provided, it generates a random password for the user."
@@ -113,7 +113,7 @@ main() {
     local password="${3:-}"
 
     create_user "${username}" "${password}"
-    if [[ "${need_add_to_sudo}" == "yes" ]]; then
+    if [[ "${need_add_to_sudo}" == "--add-to-sudo" ]]; then
         usermod -aG sudo "${username}"
         echo "  - User ${username} has been added to the sudo group."
     else

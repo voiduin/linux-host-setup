@@ -107,12 +107,12 @@ User creation successful:
 #### Usage:
 ```bash
 $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\
-curl -Ls "${SCRIPT_URL}" | sudo bash -s username [need_add_to_sudo] [password]
+curl -Ls "${SCRIPT_URL}" | sudo bash -s username [--add-to-sudo] [password]
 ```
 or
 ```bash
 $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\
-wget -qO - "${SCRIPT_URL}" | sudo bash -s username [need_add_to_sudo] [password]
+wget -qO - "${SCRIPT_URL}" | sudo bash -s username [--add-to-sudo] [password]
 ```
 
 ## General Instructions
