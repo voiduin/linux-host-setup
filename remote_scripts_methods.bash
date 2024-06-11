@@ -15,108 +15,116 @@ BLUE='\033[0;34m' # Info
 YELLOW='\033[0;93m' # Warning/Useful info
 NC='\033[0m' # No Color
 
-# Show usage instructions
-# Usage example: show_usage
-show_usage() {
-    echo "= = Usage = ="
-    echo "    Directly in CLI:"
-    echo "        $0 username [need_add_to_sudo] [password]"
-    echo "            - username: Name of the user to be created."
-    echo "            - need_add_to_sudo: (Optional) \"yes\" or empty"
-    echo "            - password: (Optional) Password for the new user.If not provided, a random password will be generated."
-    echo "    From WEB:"
-    echo "        To run the script from the internet use:"
-    echo "        curl:"
-    echo "            $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\\"
-    echo "              curl -Ls \"\${SCRIPT_URL}\" | sudo bash -s username [need_add_to_sudo] [password]"
-    echo "        wget:"
-    echo "            $ SCRIPT_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main/create_user.bash';\\"
-    echo "              wget -qO - \"\${SCRIPT_URL}\" | sudo bash -s username [need_add_to_sudo] [password]"
-    echo -e "\n"
-    echo "This script creates a new user with the specified username and password."
-    echo "If the password is not provided, it generates a random password for the user."
-}
+# Function to source and execute a remote script directly in the current shell environment
+# source remote script -> source_rscript
+# Usage:
+#   1. Set environment variable:
+#      export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+#   2. Use source_rscript script_path
+#      Example: source_rscript setup.sh
+source_rscript() {
+    local script_url="${1}"
 
-# Function to ensure a user does not already exist
-assert_user_not_exists() {
-    local username="$1"
-    local user_exists=$(id "$username" &>/dev/null && echo "yes" || echo "no")
-
-    if [[ $user_exists == "yes" ]]; then
-        exit_with_err "The user already exists: $username"
+    # Get base repo URL from environment variable
+    local base_url_rawrepo="${RSCRIPT_BASE_URL}"
+    if [[ -z "$base_url_rawrepo" ]]; then
+        echo "Error: RSCRIPT_BASE_URL is not set. Please set it before running this function." >&2
+        return 1
     fi
-}
 
-# Exit with an error message and show usage
-# Usage example: exit_with_err "Error message"
-exit_with_err() {
-    local message="$1"
-    echo -e "${RED}Error: $message${NC}"
-    echo -e "\n"
-    show_usage
-    exit 1
-}
-
-# Ensure the script is run as root
-# Usage example: assert_run_as_root
-assert_run_as_root() {
-    if [[ $EUID -ne 0 ]]; then
-        exit_with_err "This script must be run as root"
+    # Read remote script content
+    local full_script_url="${base_url_rawrepo}/${script_path}"
+    local script_content=$(curl -Ls --fail "${full_script_url}")
+    local status=$?
+    if [[ "$status" -ne 0 ]]; then
+        echo -e "       ${RED}Error${NC}: Failed to read the remote script"  >&2
+        echo "              From: \"${base_url_rawrepo}/${script_path}\""  >&2
+        echo "              Curl exit status: \"${status}\"" >&2
+        return "${status}"
     fi
+
+    # Source this script content into current shell
+    source <(echo -n "${script_content}")
 }
 
-# Function to generate a random password
-generate_random_password() {
-    local password_length=12
-    echo "$(openssl rand -base64 $password_length)"
-}
 
-# Function to create a new user with a password
-create_user() {
-    local username="$1"
-    local password="$2"
+# Function to read and execute a remote script with optional sudo and parameters
+# run remote script -> run_rscript
+# Usage:
+#   1. Set environment variable:
+#      export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+#   2. Use run_rscript script_path [--sudo] [--verbose] [params...]
+#      Example: run_rscript setup.sh [--sudo] [--verbose] param1 param2
+run_rscript () {
+    local script_path="${1}"
 
-    assert_user_not_exists "$username"
+    local use_sudo=0  # Default no sudo
+    local verbose=0   # Default quiet
+    local params=()   # Initialize params array
+    
+    # Process optional parameters --sudo and --verbose
+    shift  # Remove script_path from the parameters list
+    while (( "$#" )); do
+        case "$1" in
+            --sudo)
+                use_sudo=1
+                shift
+                ;;
+            --verbose)
+                verbose=1
+                shift
+                ;;
+            *) # Assume the rest are script parameters
+                params+=("$1")
+                shift
+                ;;
+        esac
+    done
 
-    if [[ -z $password ]]; then
-        password=$(generate_random_password)
-        local password_generated="yes"
+    # Get base repo URL from environment variable
+    local base_url_rawrepo="${RSCRIPT_BASE_URL}"
+    if [[ -z "$base_url_rawrepo" ]]; then
+        echo "Error: RSCRIPT_BASE_URL is not set. Please set it before running this function." >&2
+        return 1
+    fi
+
+    if [[ "${verbose}" -eq 1 ]]; then
+        echo -e "  ${BLUE}RUN${NC}: Try load and run script \"${script_path}\":"
+        echo "       From base repo url: \"${base_url_rawrepo}\""
+        echo "       With parameters: ${params[*]}"
+    fi
+
+    # Read remote script content
+    local full_script_url="${base_url_rawrepo}/${script_path}"
+    local script_content=$(curl -Ls --fail "${full_script_url}")
+    local status=$?
+    if [[ "$status" -ne 0 ]]; then
+        echo -e "       ${RED}Error${NC}: Failed to read the remote script"  >&2
+        echo "              From: \"${base_url_rawrepo}/${script_path}\""  >&2
+        echo "              Curl exit status: \"${status}\"" >&2
+        return "${status}"
+    fi
+
+    if [[ "${verbose}" -eq 1 ]]; then
+        echo -e "     Remote script read successfully"
+    fi
+
+    echo "     Try running readed script..."
+    # Execute script
+    if [[ "${use_sudo}" -eq 1 ]]; then
+        echo "${script_content}" | sudo bash -s -- "${params[@]}"
     else
-        local password_generated="no"
+        echo "${script_content}" | bash -s -- "${params[@]}"
+    fi
+    status=$?
+
+    if [[ "$status" -ne 0 ]]; then
+        echo "Error: Script execution failed. Bash exit status: $status" >&2
+        return "$status"
     fi
 
-    local hashed_password="$(openssl passwd -1 "$password")"
-    sudo useradd -m -p "$hashed_password" "$username"
+    # Separate from next terminal output
+    echo -ne "\n"
 
-    echo -en "${YELLOW}"
-    echo "    REMEMBER: User creation successful:"
-    echo "    - Username: ${username}"
-    echo -n "    - Password: ${password}"
-    if [[ ${password_generated} == "yes" ]]; then
-        echo " (randomly generated)"
-    else
-        echo " (set by user)"
-    fi
-    echo -en "${NC}"
-}
-
-# Main function to handle script logic
-main() {
-    assert_run_as_root
-
-    if [[ $# -lt 1 ]]; then
-        exit_with_err "ERR: Invalid number of arguments"
-    fi
-    local username="$1"
-    # Default to "no" if the third argument is not provided
-    local need_add_to_sudo="${2:-no}"
-    local password="${3:-}"
-
-    create_user "${username}" "${password}"
-    if [[ "${need_add_to_sudo}" == "yes" ]]; then
-        usermod -aG sudo "${username}"
-        echo "  - User ${username} has been added to the sudo group."
-    else
-        echo "  - User ${username} has not been added to the sudo group."
-    fi
+    return "${status}"
 }

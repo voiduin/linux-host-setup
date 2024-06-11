@@ -15,6 +15,12 @@ BLUE='\033[0;34m' # Info
 YELLOW='\033[0;93m' # Warning/Useful info
 NC='\033[0m' # No Color
 
+export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
+script_path="remote_scripts_methods.bash"
+script_content=$(curl -Ls --fail "${RSCRIPT_BASE_URL}/${script_path}" || { echo "Failed to download script from ${RSCRIPT_BASE_URL}/${script_path}" >&2; exit 1; })
+source <(echo -n "${script_content}")
+
+
 # Show usage instructions
 # Usage example: show_usage
 show_usage() {
@@ -48,87 +54,6 @@ assert_run_as_root() {
     if [[ $EUID -ne 0 ]]; then
         exit_with_err "This script must be run as root"
     fi
-}
-
-# Function to download and execute a remote script with optional sudo and parameters
-# run remote script -> run_rscript
-# Usage:
-#   1. Set environment variable:
-#      export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
-#   2. Use run_rscript script_path [--sudo] [--verbose] [params...]
-#      Example: run_rscript setup.sh [--sudo] [--verbose] param1 param2
-run_rscript () {
-    local script_path="${1}"
-
-    local use_sudo=0  # Default no sudo
-    local verbose=0   # Default quiet
-    local params=()   # Initialize params array
-    
-    # Process optional parameters --sudo and --verbose
-    shift  # Remove script_path from the parameters list
-    while (( "$#" )); do
-        case "$1" in
-            --sudo)
-                use_sudo=1
-                shift
-                ;;
-            --verbose)
-                verbose=1
-                shift
-                ;;
-            *) # Assume the rest are script parameters
-                params+=("$1")
-                shift
-                ;;
-        esac
-    done
-
-    # Get base repo URL from environment variable
-    local base_url_rawrepo="${RSCRIPT_BASE_URL}"
-    if [[ -z "$base_url_rawrepo" ]]; then
-        echo "Error: RSCRIPT_BASE_URL is not set. Please set it before running this function." >&2
-        return 1
-    fi
-
-    if [[ "${verbose}" -eq 1 ]]; then
-        echo -e "  ${BLUE}RUN${NC}: Try load and run script \"${script_path}\":"
-        echo "       From base repo url: \"${RSCRIPT_BASE_URL}\""
-        echo "       With parameters: ${params[*]}"
-    fi
-
-    # Download script content
-    local script_content
-    script_content=$(curl -Ls --fail "${RSCRIPT_BASE_URL}/${script_path}")
-    local status=$?
-    if [[ "$status" -ne 0 ]]; then
-        echo -e "       ${RED}Error${NC}: Failed to download the script"  >&2
-        echo "              From: \"${RSCRIPT_BASE_URL}/${script_path}\""  >&2
-        echo "              Curl exit status: \"${status}\"" >&2
-        return "${status}"
-    fi
-
-    if [[ "${verbose}" -eq 1 ]]; then
-        echo -e "     Script downloaded successfully"
-        echo "     Try running script..."
-    fi
-
-    # Execute script
-    if [[ "${use_sudo}" -eq 1 ]]; then
-        echo "${script_content}" | sudo bash -s -- "${params[@]}"
-    else
-        echo "${script_content}" | bash -s -- "${params[@]}"
-    fi
-    status=$?
-
-    if [[ "$status" -ne 0 ]]; then
-        echo "Error: Script execution failed. Bash exit status: $status" >&2
-        return "$status"
-    fi
-
-    # Separate from next terminal output
-    echo -ne "\n"
-
-    return "${status}"
 }
 
 # Usage example: create_backup_for_file "/etc/ssh/sshd_config"
@@ -172,7 +97,6 @@ main() {
     fi
 
     assert_run_as_root
-    export RSCRIPT_BASE_URL="https://raw.githubusercontent.com/voiduin/linux-host-setup/main"
 
     # Create new user with random password
     run_rscript create_user.bash --sudo --verbose "${new_username}" "yes"
