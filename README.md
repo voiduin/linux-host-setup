@@ -2,13 +2,19 @@
 This repository contains a collection of scripts designed to enhance the security of remote authentication systems on Linux servers.
 The primary script, [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash), integrates functionalities from three other utility scripts to establish a robust and secure remote authentication environment. Each script can also be executed independently depending on specific needs.
 
-## Example Call with Test User and Non-Standard SSH Port
+## Example: Configuring Secure SSH with Script
 
-This example demonstrates how to call the [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash) script to perform the following actions:
-- Create a new user named **"testuser"**.
-- Use a non-standard SSH port **"2222"**.
-- Require a restart of the SSH server **"sshd"** to apply new settings.
+This example demonstrates how to use the [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash) script to perform the following actions:
+1. Create a new user named **"testuser"**
+2. Change the SSH port to a non-standard port **"2222"**
+3. Install **"fail2ban"** with standard settings (not configurable in this script)
+4. Require a restart of the SSH server **"sshd"** to apply the new setting.\
+By default, these changes are made, but in the end, the user must manually restart the SSH server:
+   - Change the port number to (**Port ${new_sshd_port}**)
+   - Disable root login (**PermitRootLogin no**)
+   - Reduce the time for unauthorized sessions (**LoginGraceTime 50**)
 
+Example terminal command (tested on Ubuntu 22.04):
 ```bash
 $ export RSCRIPT_BASE_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main' &&\
   curl -Ls "${RSCRIPT_BASE_URL}/setup_secure_remote_auth.bash" | sudo bash -s testuser 2222 yes
