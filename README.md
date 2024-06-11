@@ -1,35 +1,55 @@
 # Secure Remote Authentication Setup Scripts Suite
-This repository contains a collection of scripts designed to enhance the security of remote authentication systems on Linux servers.
-The primary script, [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash), integrates functionalities from three other utility scripts to establish a robust and secure remote authentication environment. Each script can also be executed independently depending on specific needs.
 
-## Example: Configuring Secure SSH with Script
+This repository provides a suite of scripts, designed to bolster the security\
+of remote authentication systems on Linux servers, which can be invoked\
+directly from the terminal ***<ins>without the need for local copying or installation</ins>***.
 
-This example demonstrates how to use the [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash) script to perform the following actions:
-1. Create a new user named **"testuser"**
-2. Change the SSH port to a non-standard port **"2222"**
-3. Install **"fail2ban"** with standard settings (not configurable in this script)
-4. Require a restart of the SSH server **"sshd"** to apply the new setting.\
-By default, these changes are made, but in the end, the user must manually restart the SSH server:
-   - Change the port number to (**Port ${new_sshd_port}**)
-   - Disable root login (**PermitRootLogin no**)
-   - Reduce the time for unauthorized sessions (**LoginGraceTime 50**)
-
-Example terminal command (tested on Ubuntu 22.04):
+Here’s an example terminal command to use the primary script,\
+[`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash) which configuring more\
+secure SSH server (tested on Ubuntu 22.04):
 ```bash
-$ export RSCRIPT_BASE_URL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main' &&\
-  curl -Ls "${RSCRIPT_BASE_URL}/setup_secure_remote_auth.bash" | sudo bash -s testuser 2222 --restart-sshd
+$ BASEURL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main' && \
+  curl -Ls "${BASEURL}/setup_secure_remote_auth.bash" | \
+  sudo bash -s testuser 2222 --restart-sshd
 ```
+
+This example demonstrates how to use the setup_secure_remote_auth\
+script to perform the following actions:
+1. Create a new user named **"testuser"**
+2. Change the SSH server settings:\
+By default, these changes are made, but in the end, the user must manually\
+restart the SSH server:
+   - Change the port number to a non-standard port **"2222"** (sshd setting: **Port ${new_sshd_port}**)
+   - Disable root login (sshd setting: **PermitRootLogin no**)
+   - Reduce the time for unauthorized sessions (sshd setting: **LoginGraceTime 50**)
+3. Install **"fail2ban"** with standard settings (not configurable in this script)
+4. Require a restart of the SSH server **"sshd"** to apply the new setting
+
+The primary script, [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash),\
+integrates functionalities from three other utility scripts to establish\
+a robust and secure remote authentication environment. Each script can also\
+be executed independently depending on specific needs.
+
 
 ## Scripts Overview
 
-1. **setup_secure_remote_auth.bash** - This master script configures the entire secure remote authentication setup, utilizing the other three scripts listed below to perform specific tasks.
-2. **fail2ban_install.bash** - Installs and configures Fail2Ban to protect SSH access.
-3. **sshd_configure.bash** - Configures various SSHD settings like port, root login permission, and password authentication.
-4. **create_user.bash** - Creates a new user with an optional password; if no password is specified, a random one will be generated.
+1. **setup_secure_remote_auth.bash**\
+This master script configures the entire secure remote authentication setup,\
+utilizing the other three scripts listed below to perform specific tasks.
+2. **fail2ban_install.bash**\
+Installs and configures Fail2Ban to protect SSH access.
+3. **sshd_configure.bash**\
+Configures various SSHD settings like port, root login permission,\
+and password authentication.
+4. **create_user.bash**\
+Creates a new user with an optional password; if no password is specified,\
+a random one will be generated.
 
 ### 1. `setup_secure_remote_auth.bash`
 
-This script is the main orchestrator that sets up secure remote authentication by configuring SSH settings, installing and configuring Fail2Ban, and managing user creation with enhanced security protocols.
+This script is the main orchestrator that sets up secure remote authentication\
+by configuring SSH settings, installing and configuring Fail2Ban, and managing\
+user creation with enhanced security protocols.
 
 #### Features:
 - Modifies SSH configuration to secure settings.
@@ -38,11 +58,13 @@ This script is the main orchestrator that sets up secure remote authentication b
 
 #### Usage:
 ```bash
-curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]
+curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | \
+sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]
 ```
 or
 ```bash
-wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]
+wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | \
+sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]
 ```
 
 Example output below:
