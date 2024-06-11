@@ -98,11 +98,6 @@ main() {
 
     assert_run_as_root
 
-    # Create new user with random password
-    run_rscript create_user.bash --sudo --verbose "${new_username}" "yes"
-    local user_creation_status=$?
-    ((total_errors += user_creation_status != 0 ? 1 : 0))
-
     # Configure SSH config file
     create_backup_for_file "${config_file_path}"
     run_rscript sshd_configure.bash --sudo --verbose Port ${new_sshd_port}
@@ -121,6 +116,11 @@ main() {
     run_rscript fail2ban_install.bash --sudo --verbose
     local fail2ban_status=$?
     ((total_errors += fail2ban_status != 0 ? 1 : 0))
+
+    # Create new user with random password
+    run_rscript create_user.bash --sudo --verbose "${new_username}" "yes"
+    local user_creation_status=$?
+    ((total_errors += user_creation_status != 0 ? 1 : 0))
 
     # Check if SSHD needs to be restarted
     local sshd_restart_status=0
