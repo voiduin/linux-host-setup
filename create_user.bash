@@ -113,6 +113,10 @@ main() {
     local password="${3:-}"
 
     create_user "${username}" "${password}"
+
+    # Set default user shell - BASH (by default set minimalistic '/bash/sh')
+    usermod --shell '/bin/bash' "${username}"
+
     if [[ "${need_add_to_sudo}" == "--add-to-sudo" ]]; then
         usermod -aG sudo "${username}"
         echo "  - User ${username} has been added to the sudo group."
