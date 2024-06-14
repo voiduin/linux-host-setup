@@ -108,9 +108,25 @@ main() {
     local sshd_permit_root_status=$?
     ((total_errors += sshd_permit_root_status != 0 ? 1 : 0))
 
+    run_rscript sshd_configure.bash --sudo --verbose PermitEmptyPasswords no
+    local sshd_permit_empty_passwords=$?
+    ((total_errors += sshd_permit_empty_passwords != 0 ? 1 : 0))
+
     run_rscript sshd_configure.bash --sudo --verbose LoginGraceTime 50
     local sshd_login_grace_status=$?
     ((total_errors += sshd_login_grace_status != 0 ? 1 : 0))
+    
+    # Prevent breaks in non-active terminal connections
+    # For example, if you see a terminal command in a browser and you are not using SSH:
+    # 60 mean - one packet in 60 seconds
+    run_rscript sshd_configure.bash --sudo --verbose ClientAliveInterval 60
+    local sshd_client_alive_interval=$?
+    ((total_errors += sshd_client_alive_interval != 0 ? 1 : 0))
+    # 20 mean - maximum 20 packets in <!ClientAliveInterval!> seconds
+    # In case when ClientAliveInterval=60 - 20 is minutes to brake connection
+    run_rscript sshd_configure.bash --sudo --verbose ClientAliveCountMax 20
+    local sshd_client_alive_count_max=$?
+    ((total_errors += sshd_client_alive_count_max != 0 ? 1 : 0))
    
     # Install fail2ban
     run_rscript fail2ban_install.bash --sudo --verbose
@@ -132,9 +148,13 @@ main() {
 
     echo -e "  ${BLUE}Operation Summary${NC} (Status codes: 0 is success, 1 is error):"
     echo -e "  - User Creation:${NC} ${user_creation_status}"
-    echo -e "  - SSHD Port Configuration: ${sshd_port_status}"
-    echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_permit_root_status}"
-    echo -e "  - SSHD PermitRootLogin Configuration: ${sshd_login_grace_status}"
+    echo -e "  - SSHD Configuration:"
+    echo -e "        Port - ${sshd_port_status}"
+    echo -e "        PermitRootLogin - ${sshd_permit_root_status}"
+    echo -e "        PermitEmptyPasswords - ${sshd_permit_empty_passwords}"
+    echo -e "        LoginGraceTime - ${sshd_login_grace_status}"
+    echo -e "        ClientAliveInterval - ${sshd_client_alive_interval}"
+    echo -e "        ClientAliveCountMax - ${sshd_client_alive_count_max}"
     echo -e "  - Fail2Ban Installation: ${fail2ban_status}"
     if [[ "${need_restart_sshd}" == "--restart-sshd" ]]; then
         echo -e "  - SSHD Restart: ${sshd_restart_status}"
