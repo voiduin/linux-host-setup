@@ -115,7 +115,12 @@ main() {
     run_rscript sshd_configure.bash --sudo --verbose LoginGraceTime 50
     local sshd_login_grace_status=$?
     ((total_errors += sshd_login_grace_status != 0 ? 1 : 0))
-    
+
+    # Set verbose SSH server log for a clear audit process
+    run_rscript sshd_configure.bash --sudo --verbose LogLevel VERBOSE # Default INFO
+    local sshd_loglevel=$?
+    ((total_errors += sshd_loglevel != 0 ? 1 : 0))
+
     # Prevent breaks in non-active terminal connections
     # For example, if you see a terminal command in a browser and you are not using SSH:
     # 60 mean - one packet in 60 seconds
@@ -127,7 +132,18 @@ main() {
     run_rscript sshd_configure.bash --sudo --verbose ClientAliveCountMax 20
     local sshd_client_alive_count_max=$?
     ((total_errors += sshd_client_alive_count_max != 0 ? 1 : 0))
-   
+
+    # Boost speed auth SSH by disable not used aut methods (Kerberos) and DNS
+    run_rscript sshd_configure.bash --sudo --verbose GSSAPIAuthentication no
+    local sshd_gssapi=$?
+    ((total_errors += sshd_gssapi != 0 ? 1 : 0))
+    run_rscript sshd_configure.bash --sudo --verbose KerberosAuthentication no
+    local sshd_kerberos=$?
+    ((total_errors += sshd_kerberos != 0 ? 1 : 0))
+    run_rscript sshd_configure.bash --sudo --verbose UseDNS no
+    local sshd_dns=$?
+    ((total_errors += sshd_kerberos != 0 ? 1 : 0))
+
     # Install fail2ban
     run_rscript fail2ban_install.bash --sudo --verbose
     local fail2ban_status=$?
@@ -153,8 +169,12 @@ main() {
     echo -e "        PermitRootLogin - ${sshd_permit_root_status}"
     echo -e "        PermitEmptyPasswords - ${sshd_permit_empty_passwords}"
     echo -e "        LoginGraceTime - ${sshd_login_grace_status}"
+    echo -e "        LogLevel - ${sshd_loglevel}"
     echo -e "        ClientAliveInterval - ${sshd_client_alive_interval}"
     echo -e "        ClientAliveCountMax - ${sshd_client_alive_count_max}"
+    echo -e "        GSSAPIAuthentication - ${sshd_gssapi}"
+    echo -e "        KerberosAuthentication - ${sshd_kerberos}"
+    echo -e "        UseDNS - ${sshd_dns}"
     echo -e "  - Fail2Ban Installation: ${fail2ban_status}"
     if [[ "${need_restart_sshd}" == "--restart-sshd" ]]; then
         echo -e "  - SSHD Restart: ${sshd_restart_status}"
