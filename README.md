@@ -7,10 +7,33 @@ directly from the terminal ***<ins>without the need for local copying or install
 Here’s an example terminal command to use the primary script,\
 [`setup_secure_remote_auth.bash`](setup_secure_remote_auth.bash) which configuring more\
 secure SSH server (tested on Ubuntu 22.04):
+- Set vars
+```bash
+# NEW_USERNAME='testuser'
+# CUSTOM_PORT_NUM='2222'
+```
+
+- Run command
 ```bash
 $ BASEURL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main' && \
   curl -Ls "${BASEURL}/setup_secure_remote_auth.bash" | \
-  sudo bash -s testuser 2222 --restart-sshd
+  sudo bash -s "${NEW_USERNAME}" "${CUSTOM_PORT_NUM}" --restart-sshd
+```
+
+After that command, you will get the following terminal output as an example - remember the credentials!
+```bash
+...
+    REMEMBER: User creation successful:
+    - Username: testuser
+    - Password: WTPxcJ9JLgxCtK0S (randomly generated)
+...
+```
+
+And then you can change your random password to your secret password (if needed):
+
+```bash
+$ passwd "${NEW_USERNAME}"
+    # Enter your new password at this prompt
 ```
 
 This example demonstrates how to use the setup_secure_remote_auth\
