@@ -11,6 +11,8 @@ secure SSH server (tested on Ubuntu 22.04):
 ```bash
 $ NEW_USERNAME='testuser'
 $ CUSTOM_PORT_NUM='2222'
+    # Optional (not use in script, but use in host post init)
+$ NEW_HOSTNAME='myhost'
 ```
 
 - Run command
@@ -39,7 +41,7 @@ $ passwd "${NEW_USERNAME}"
 
 You may also want to change the hostname:
 ```bash
-$ hostname <!new_hostname!>
+$ hostname "${NEW_HOSTNAME}"
 ```
 
 To finish, you need to re-login to your new user account and go to its home directory:
