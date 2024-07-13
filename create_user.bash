@@ -100,6 +100,15 @@ create_user() {
     echo -en "${NC}"
 }
 
+# Function to add user to a group
+add_user_to_group() {
+    local user_name="$1"
+    local group_name="$2"
+
+    usermod -aG "${group_name}" "${user_name}"
+    echo "  - User ${user_name} has been added to the ${group_name} group"
+}
+
 # Main function to handle script logic
 main() {
     assert_run_as_root
@@ -108,20 +117,44 @@ main() {
         exit_with_err "ERR: Invalid number of arguments"
     fi
     local username="$1"
+    shift
+
     # Default to "no" if the third argument is not provided
-    local need_add_to_sudo="${2:-no}"
-    local password="${3:-}"
+    local need_add_to_sudo="no"
+    local need_add_to_docker="no"
+    
+    local password=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --add-to-sudo)
+                need_add_to_sudo="yes"
+                ;;
+            --add-to-docker)
+                need_add_to_docker="yes"
+                ;;
+            *)
+                if [[ -z "${password}" ]]; then
+                    password="$1"
+                else
+                    exit_with_err "ERR: Unexpected argument: $1"
+                fi
+                ;;
+        esac
+        shift
+    done
 
     create_user "${username}" "${password}"
 
     # Set default user shell - BASH (by default set minimalistic '/bash/sh')
     usermod --shell '/bin/bash' "${username}"
 
-    if [[ "${need_add_to_sudo}" == "--add-to-sudo" ]]; then
-        usermod -aG sudo "${username}"
-        echo "  - User ${username} has been added to the sudo group."
-    else
-        echo "  - User ${username} has not been added to the sudo group."
+    if [[ "${need_add_to_sudo}" == "yes" ]]; then
+        add_user_to_group "${username}" "sudo"
+    fi
+
+    if [[ "${need_add_to_docker}" == "yes" ]]; then
+        add_user_to_group "${username}" "docker"
     fi
 }
 
