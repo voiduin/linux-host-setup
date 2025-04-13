@@ -11,6 +11,7 @@ secure SSH server (tested on Ubuntu 22.04):
 ```bash
 $ NEW_USERNAME='testuser'
 $ CUSTOM_PORT_NUM='2222'
+$ PUBLIC_SSH_KEY_URL='https://raw.githubusercontent.com/voiduin/keys/main/public-white-ed25519.pub' # Optional
     # Optional (not use in script, but use in host post init)
 $ NEW_HOSTNAME='myhost'
 ```
@@ -19,7 +20,7 @@ $ NEW_HOSTNAME='myhost'
 ```bash
 $ BASEURL='https://raw.githubusercontent.com/voiduin/linux-host-setup/main' && \
   curl -Ls "${BASEURL}/setup_secure_remote_auth.bash" | \
-  sudo bash -s "${NEW_USERNAME}" "${CUSTOM_PORT_NUM}" --restart-sshd
+  sudo bash -s -- --username "${NEW_USERNAME}" --port "${CUSTOM_PORT_NUM}" --ssh-public-key-url "${PUBLIC_SSH_KEY_URL}" --restart-sshd
 ```
 
 After that command, you will get the following terminal\

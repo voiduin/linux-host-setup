@@ -25,17 +25,29 @@ source <(echo -n "${script_content}")
 # Usage example: show_usage
 show_usage() {
     echo "= = Usage = ="
+    echo "  This script configures secure SSH access with a new user, updated sshd settings,"
+    echo "  optional public key installation, and optional SSHD restart."
+    echo -e "\n"
+    echo "    This script is part of the 'linux-host-setup' suite."
+    echo -e "\n"
     echo "    Directly in CLI:"
-    echo "        $0 [new_username] [new_sshd_port] [--restart-sshd]"
-    echo "            - new_username [string]: Name of the user to be created."
-    echo "            - new_sshd_port [digit]: Change SSHD port from default 22 to [new_sshd_port]."
-    echo "            - --restart-sshd or empty: This argument determines if SSHD needs to be restarted"
+    echo "        $0 --username <name> --port <sshd_port> [--ssh-public-key-url <url>] [--restart-sshd]"
+    echo "        Flags:"
+    echo "          --username <name>             Required. Username to create (e.g. 'admin')."
+    echo "          --port <sshd_port>            Required. Port to set for SSHD (e.g. 2222)."
+    echo "          --ssh-public-key-url <url>    Optional. URL to public SSH key (e.g. GitHub raw)."
+    echo "          --restart-sshd                Optional. If present, restarts SSHD after configuration."
+    echo "          -h, --help                    Show this help message and exit."
     echo "    From WEB:"
     echo "        To run the script from the internet use:"
     echo "        curl:"
-    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]"
+    echo "            curl -Ls https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s -- --username <name> --port <sshd_port> --ssh-public-key-url <url> --restart-sshd"
     echo "        wget:"
-    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s [new_username] [new_sshd_port] [--restart-sshd]"
+    echo "            wget -qO - https://raw.githubusercontent.com/voiduin/linux-host-setup/main/setup_secure_remote_auth.bash | sudo bash -s -- --username <name> --port <sshd_port> --ssh-public-key-url <url> --restart-sshd"
+    echo "  Requirements:"
+    echo "    - Must be run as root (use sudo)"
+    echo "    - Internet connection required to fetch remote scripts"
+    echo "    - 'curl' must be installed"
 }
 
 
@@ -85,22 +97,52 @@ restart_sshd() {
 
 # Main function to handle script logic
 main() {
-    local new_username="${1}"
-    local new_sshd_port="${2}"
-    local need_restart_sshd="${3:-no}"  # Default to no if not provided
+    # Defaults
+    local new_username=""
+    local new_sshd_port=""
+    local ssh_key_url=""
+    local need_restart_sshd="no" # Default to 'no' if not provided
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --username)
+                new_username="${2}"
+                shift 2
+                ;;
+            --port)
+                new_sshd_port="${2}"
+                shift 2
+                ;;
+            --ssh-public-key-url)
+                ssh_key_url="${2}"
+                shift 2
+                ;;
+            --restart-sshd)
+                need_restart_sshd="yes"
+                shift
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                exit_with_err "Unknown argument: ${1}"
+                ;;
+        esac
+    done
 
     local config_file_path="/etc/ssh/sshd_config"
     local total_errors=0
 
     if [[ -z "$new_username" ]] || [[ -z "$new_sshd_port" ]]; then
-        exit_with_err "Missing arguments. Please specify a [new_username] and a [new_sshd_port]."
+        exit_with_err "Missing required flags --username and --port"
     fi
 
     assert_run_as_root
 
     # Configure SSH config file
     create_backup_for_file "${config_file_path}"
-    run_rscript sshd_configure.bash --sudo --verbose Port ${new_sshd_port}
+    run_rscript sshd_configure.bash --sudo --verbose Port "${new_sshd_port}"
     local sshd_port_status=$?
     ((total_errors += sshd_port_status != 0 ? 1 : 0))
 
@@ -142,7 +184,7 @@ main() {
     ((total_errors += sshd_kerberos != 0 ? 1 : 0))
     run_rscript sshd_configure.bash --sudo --verbose UseDNS no
     local sshd_dns=$?
-    ((total_errors += sshd_kerberos != 0 ? 1 : 0))
+    ((total_errors += sshd_dns != 0 ? 1 : 0))
 
     # Install fail2ban
     run_rscript fail2ban_install.bash --sudo --verbose
@@ -154,9 +196,16 @@ main() {
     local user_creation_status=$?
     ((total_errors += user_creation_status != 0 ? 1 : 0))
 
-    # Check if SSHD needs to be restarted
+    # Add SSH public key if provided
+    if [[ -n "$ssh_key_url" ]]; then
+        run_rscript add_public_ssh_key.bash --verbose "${new_username}" --ssh-public-key-url "${ssh_key_url}"
+        local ssh_key_status=$?
+        ((total_errors += ssh_key_status != 0 ? 1 : 0))
+    fi
+
+    # Restart SSHD if needed
     local sshd_restart_status=0
-    if [[ "${need_restart_sshd}" == "--restart-sshd" ]]; then
+    if [[ "${need_restart_sshd}" == "yes" ]]; then
         restart_sshd
         sshd_restart_status=$?
         ((total_errors += sshd_restart_status != 0 ? 1 : 0))
@@ -176,7 +225,10 @@ main() {
     echo -e "        KerberosAuthentication - ${sshd_kerberos}"
     echo -e "        UseDNS - ${sshd_dns}"
     echo -e "  - Fail2Ban Installation: ${fail2ban_status}"
-    if [[ "${need_restart_sshd}" == "--restart-sshd" ]]; then
+    if [[ -n "$ssh_key_url" ]]; then
+        echo -e "  - Public Key Addition: ${ssh_key_status}"
+    fi
+    if [[ "${need_restart_sshd}" == "yes" ]]; then
         echo -e "  - SSHD Restart: ${sshd_restart_status}"
     fi
     echo -ne "\n"
