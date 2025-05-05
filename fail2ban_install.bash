@@ -88,9 +88,9 @@ create_config_file() {
 enabled = true
 port = ssh
 filter = sshd
-logpath = /var/log/auth.log
-maxretry = 5
-bantime = 600
+backend = systemd
+maxretry = 4
+bantime = 6000
 "
     echo "  - Creating configuration file at ${file_path}..."
     echo "$config_data" | sudo tee "${file_path}" > /dev/null
