@@ -62,6 +62,13 @@ assert_file_not_exists() {
     fi
 }
 
+# Ensure that systemd is installed
+assert_systemd_installed() {
+    if [ ! -d "/run/systemd/system" ]; then
+        exit_with_err "Systemd is not installed. Fail2Ban with backend=systemd cannot be used"
+    fi
+}
+
 # Ensure an application is not already installed
 assert_not_installed() {
     local app_name="$1"
@@ -140,6 +147,7 @@ check_status() {
 main() {
     assert_run_as_root
     assert_file_not_exists "/etc/fail2ban/jail.local"
+    assert_systemd_installed
     install_app_quietly "fail2ban"
     create_config_file
     start_fail2ban
