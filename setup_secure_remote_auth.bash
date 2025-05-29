@@ -83,14 +83,37 @@ create_backup_for_file() {
 }
 
 # Without parameters
+get_ssh_service_name() {
+    local ssh_service=""
+    
+    # ssh.service (Ubuntu/Debian)
+    if systemctl list-unit-files | grep -q "^ssh.service"; then
+        ssh_service="ssh"
+    # sshd.service (CentOS/RHEL/Fedora) or allias sshd.service (Ubuntu/Debian)
+    elif systemctl list-unit-files | grep -q "^sshd.service"; then
+        ssh_service="sshd"
+    fi
+    
+    echo "${ssh_service}"
+}
+
+# Without parameters
 restart_sshd() {
     echo -e "  ${BLUE}SSHD${NC} restart start ..."
-    systemctl restart sshd
-    if [[ $? -ne 0 ]]; then
-        echo "  - Failed to restart SSHD."
+    local ssh_service=$(get_ssh_service_name)
+
+    if [[ -z "${ssh_service}" ]]; then
+        echo -e "  - ${RED}Error${NC}: Cannot find SSH service (tried: ssh, sshd, openssh-server)"
         return 1
     fi
-    echo "  - SSHD restarted successfully."
+    echo "  - Using SSH service: ${ssh_service}.service"
+    
+    systemctl restart "${ssh_service}"
+    if [[ $? -ne 0 ]]; then
+        echo -e "  - ${RED}Failed${NC} to restart ${ssh_service}.service"
+        return 1
+    fi
+    echo -e "  - ${GREEN}Success${NC}: ${ssh_service}.service restarted successfully"
     echo -ne "\n"
     return 0
 }
